@@ -7,6 +7,7 @@ import {
   GreenBreathingCircle
 } from '@renderer/components/BreathingCircle'
 import { Button } from '@renderer/components/Button'
+import StatusIndicator from '@renderer/components/StatusIndicator'
 
 const DashboardPage: FC = () => {
   return (
@@ -28,7 +29,11 @@ const DashboardPage: FC = () => {
       <RedBreathingCircle />
       <YellowBreathingCircle />
       <GreenBreathingCircle />
-      <Button title="123" />
+      <Button title="默认按钮" />
+      <Button title="禁用按钮" lock />
+      <Button title="切换按钮" toggle />
+      
+      <StatusIndicator status="ok" />
     </>
   )
 }
