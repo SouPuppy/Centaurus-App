@@ -1,6 +1,6 @@
 import { FC, useRef, useEffect, useState } from "react";
 import * as echarts from "echarts";
-import klin from './klin.json'
+import klin from './klin.json';
 import dayjs from "dayjs";
 
 // 模拟的数据类型
@@ -101,7 +101,6 @@ const Kline: FC = () => {
         max: "dataMax",
         axisLabel: {
           show: true, // 显示副图的 x 轴刻度
-          color: "",
           fontSize: 12,
           formatter: (value: string) => dayjs(value).format('HH:mm'),
         },
@@ -125,24 +124,22 @@ const Kline: FC = () => {
       },
     ],
     dataZoom: [
-    // 内部控制（鼠标滚轮、触摸缩放）
-    { 
-      type: "inside", 
-      xAxisIndex: [0, 1],  // 同时作用于主图和副图
-      start: 50, 
-      end: 100 
-    },
-    // 外部控制（滑动条控制）
-    { 
-      type: "slider", 
-      xAxisIndex: [0, 1],  // 同时作用于主图和副图
-      start: 50, 
-      end: 100,
-      handleSize: "100%", // 设置滑动条的大小
-      height: 20, // 设置滑动条的高度
-      bottom: 10,  // 设置滑动条的位置
-    }
-  ],
+      // 内部控制（鼠标滚轮、触摸缩放）
+      { 
+        type: "inside", 
+        xAxisIndex: [0, 1],  // 同时作用于主图和副图，但不影响 Y 轴
+        start: 50, 
+        end: 100 
+      },
+      // Y轴的拖拽缩放（只启用内部拖动，不显示滑动条）
+      {
+        type: "inside", 
+        yAxisIndex: [0],  // 只作用于 Y 轴
+        orient: 'vertical',  // 设置为竖直方向
+        start: 50,
+        end: 100,
+      }
+    ],
 
     series: [] as echarts.SeriesOption[],
   };
@@ -177,74 +174,28 @@ const Kline: FC = () => {
   useEffect(() => {
     if (chart && klinData.length) {
       const { categoryData, values, volumes } = splitData(klinData);
-      // console.log(categoryData, values, volumes);
-
-      // 创建series数据
-      const series: echarts.EChartsOption["series"] = [
+      option.xAxis[0].data = categoryData;
+      option.xAxis[1].data = categoryData;
+      option.series = [
         {
           type: "candlestick",
           name: "K",
-          data: values,  // 用values作为K线图的数据
+          data: values,
           xAxisIndex: 0,
           yAxisIndex: 0,
-          itemStyle: {
-            color: 'red',
-            color0: 'green',
-            borderColor: undefined,
-            borderColor0: undefined,
-          },
         },
         {
           type: "bar",
           name: "持仓量",
-          data: volumes,  // 用volumes作为持仓量的数据
+          data: volumes,
           xAxisIndex: 1,
           yAxisIndex: 1,
-        },
+        }
       ];
 
-      // 更新 xAxis 数据
-      option.xAxis[0].data = categoryData; // 更新主图的x轴数据
-      option.xAxis[1].data = categoryData; // 更新副图的x轴数据
-
-      // 更新 series 数据
-      option.series = series;
-
-      // 侦听数据缩放事件
-      chart.on("dataZoom", (params: any) => {
-        params.batch?.forEach?.((zoom: any) => handleDataZoom(zoom));
-      });
-      // 调用 setOption 方法更新图表
       chart.setOption(option);
-
     }
   }, [chart, klinData]);
-
-
-  // 拖拽到历史数据调接口 todo...
-  const handleDataZoom = (params: any) => {
-    if (Number(params.start) === 0) {
-      console.log(params);
-    }
-  };
-
-    // 实时数据更新方法
-  const handleRealTimeData = (newData: KlineData) => {
-    setKlinData((prevData) => {
-      // 将新数据推入数据数组并更新图表
-      const updatedData = [...prevData, newData];
-      const { categoryData, values, volumes } = splitData(updatedData);
-      
-      // 更新图表的 xAxis 和 series 数据
-      option.xAxis[0].data = categoryData;
-      option.xAxis[1].data = categoryData;
-      option.series[0].data = values;
-      option.series[1].data = volumes;
-
-      chart?.setOption(option);  // 更新图表
-      return updatedData; // 更新 state
-    });
-  };
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
